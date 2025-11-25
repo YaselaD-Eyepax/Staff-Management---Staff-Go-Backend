@@ -21,7 +21,7 @@ func main() {
         api.GET("/events", h.ListEvents)
         api.GET("/events/:id", h.GetEvent)
         api.POST("/events", h.CreateEvent)
-        // api.PATCH("/events/:id", h.UpdateEvent)
+        api.PATCH("/events/:id", h.UpdateEvent)
         // api.POST("/events/:id/moderate", h.ModerateEvent)
         // api.POST("/events/:id/broadcast", h.BroadcastEvent)
         // api.POST("/events/tag-suggest", h.TagSuggest)

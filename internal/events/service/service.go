@@ -27,3 +27,7 @@ func (s *EventService) GetEvent(id uuid.UUID) (*models.Event, error) {
 func (s *EventService) GetEventFeed(page int, size int, since *time.Time, channel string) ([]models.Event, int64, error) {
 	return s.Repo.GetEventFeed(page, size, since, channel)
 }
+
+func (s *EventService) UpdateEvent(event models.Event, body models.AnnouncementBody, tags []models.EventTag) error {
+    return s.Repo.UpdateEvent(&event, &body, tags)
+}

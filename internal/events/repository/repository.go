@@ -81,3 +81,37 @@ func (r *EventRepository) GetEventFeed(page int, size int, since *time.Time, cha
 
 	return events, total, nil
 }
+
+func (r *EventRepository) UpdateEvent(event *models.Event, body *models.AnnouncementBody, tags []models.EventTag) error {
+    return r.DB.Transaction(func(tx *gorm.DB) error {
+
+        // Update event fields
+        if err := tx.Model(&models.Event{}).
+            Where("id = ?", event.ID).
+            Updates(event).Error; err != nil {
+            return err
+        }
+
+        // Update body
+        if err := tx.Model(&models.AnnouncementBody{}).
+            Where("event_id = ?", event.ID).
+            Updates(body).Error; err != nil {
+            return err
+        }
+
+        // Remove old tags
+        if err := tx.Where("event_id = ?", event.ID).
+            Delete(&models.EventTag{}).Error; err != nil {
+            return err
+        }
+
+        // Add new tags
+        if len(tags) > 0 {
+            if err := tx.Create(&tags).Error; err != nil {
+                return err
+            }
+        }
+
+        return nil
+    })
+}
