@@ -1,0 +1,96 @@
+# -------------------------
+# Go Build Artifacts
+# -------------------------
+bin/
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go cache
+*.prof
+*.pprof
+*.cov
+coverage.txt
+
+# -------------------------
+# Dependency / Module
+# -------------------------
+vendor/
+go.sum
+
+# -------------------------
+# Environment Files
+# -------------------------
+.env
+*.env
+*.env.*
+
+# -------------------------
+# IDE / Editor Specific
+# -------------------------
+
+# GoLand / JetBrains
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# -------------------------
+# Logs
+# -------------------------
+*.log
+logs/
+debug.log
+
+# -------------------------
+# OS Files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Local Data Storage
+# -------------------------
+data/
+tmp/
+temp/
+cache/
+
+# -------------------------
+# Migrations (compiled or generated)
+# -------------------------
+internal/db/migrations/*.sql~
+internal/db/migrations/*.tmp
+
+# -------------------------
+# Firebase / Cloud Keys (never commit)
+# -------------------------
+fcm.json
+service-account.json
+credentials.json
+
+# -------------------------
+# Go Air Hot Reload
+# -------------------------
+.air/
+.air.toml
+
+# -------------------------
+# Windows specific
+# -------------------------
+*.psd1
+*.psm1
+
+# -------------------------
+# Misc
+# -------------------------
+*.swp
+*.swo
