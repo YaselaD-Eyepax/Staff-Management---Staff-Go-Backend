@@ -31,3 +31,7 @@ func (s *EventService) GetEventFeed(page int, size int, since *time.Time, channe
 func (s *EventService) UpdateEvent(event models.Event, body models.AnnouncementBody, tags []models.EventTag) error {
     return s.Repo.UpdateEvent(&event, &body, tags)
 }
+
+func (s *EventService) ModerateEvent(eventID uuid.UUID, status string, moderator uuid.UUID, notes string) error {
+    return s.Repo.ModerateEvent(eventID, status, moderator, notes)
+}

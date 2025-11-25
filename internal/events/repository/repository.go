@@ -115,3 +115,35 @@ func (r *EventRepository) UpdateEvent(event *models.Event, body *models.Announce
         return nil
     })
 }
+
+func (r *EventRepository) ModerateEvent(eventID uuid.UUID, status string, moderatorID uuid.UUID, notes string) error {
+    return r.DB.Transaction(func(tx *gorm.DB) error {
+
+        // Update event status
+        if err := tx.Model(&models.Event{}).
+            Where("id = ?", eventID).
+            Updates(map[string]interface{}{
+                "status": status,
+            }).Error; err != nil {
+            return err
+        }
+
+        // Insert audit entry
+        audit := models.PublishAudit{
+            EventID: eventID,
+            Channel: "moderation",
+            Status:  status,
+            Details: map[string]interface{}{
+                "moderator_id": moderatorID.String(),
+                "notes":        notes,
+            },
+            CreatedAt: time.Now(),
+        }
+
+        if err := tx.Create(&audit).Error; err != nil {
+            return err
+        }
+
+        return nil
+    })
+}

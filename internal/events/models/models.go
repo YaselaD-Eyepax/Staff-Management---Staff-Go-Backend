@@ -1,9 +1,9 @@
 package models
 
 import (
-    "time"
+	"time"
 
-    "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type Event struct {
@@ -32,4 +32,17 @@ type EventTag struct {
     ID      uint      `gorm:"primaryKey"`
     EventID uuid.UUID `gorm:"type:uuid"`
     Tag     string
+}
+
+type PublishAudit struct {
+    ID        uint                   `gorm:"primaryKey" json:"id"`
+    EventID   uuid.UUID              `gorm:"type:uuid" json:"event_id"`
+    Channel   string                 `json:"channel"`  // "moderation", "fcm", "email", "teams"
+    Status    string                 `json:"status"`   // approved, rejected, sent, failed
+    Details   map[string]interface{} `gorm:"type:jsonb" json:"details"`
+    CreatedAt time.Time              `json:"created_at"`
+}
+
+func (PublishAudit) TableName() string {
+    return "publish_audit"
 }
