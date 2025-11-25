@@ -1,10 +1,11 @@
 package service
 
 import (
-    "events-service/internal/events/models"
-    "events-service/internal/events/repository"
+	"events-service/internal/events/models"
+	"events-service/internal/events/repository"
+	"time"
 
-    "github.com/google/uuid"
+	"github.com/google/uuid"
 )
 
 type EventService struct {
@@ -21,4 +22,8 @@ func (s *EventService) CreateEvent(dto models.Event, body models.AnnouncementBod
 
 func (s *EventService) GetEvent(id uuid.UUID) (*models.Event, error) {
     return s.Repo.GetEvent(id)
+}
+
+func (s *EventService) GetEventFeed(page int, size int, since *time.Time, channel string) ([]models.Event, int64, error) {
+	return s.Repo.GetEventFeed(page, size, since, channel)
 }

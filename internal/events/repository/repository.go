@@ -1,9 +1,11 @@
 package repository
 
 import (
-    "events-service/internal/events/models"
-    "github.com/google/uuid"
-    "gorm.io/gorm"
+	"events-service/internal/events/models"
+	"time"
+
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type EventRepository struct {
@@ -46,4 +48,36 @@ func (r *EventRepository) GetEvent(id uuid.UUID) (*models.Event, error) {
     }
 
     return &event, nil
+}
+
+func (r *EventRepository) GetEventFeed(page int, size int, since *time.Time, channel string) ([]models.Event, int64, error) {
+	var events []models.Event
+	var total int64
+
+	offset := (page - 1) * size
+
+	q := r.DB.Model(&models.Event{}).
+		Preload("Tags").
+		Order("created_at DESC")
+
+	if since != nil {
+		q = q.Where("created_at > ?", *since)
+	}
+
+	// Future feature: feed per channel (Teams, mobile, etc.)
+	if channel != "" {
+		_ = channel // placeholder for future filters
+	}
+
+	// Count total items
+	if err := q.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination
+	if err := q.Offset(offset).Limit(size).Find(&events).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return events, total, nil
 }

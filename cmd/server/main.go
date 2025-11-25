@@ -18,7 +18,7 @@ func main() {
 
     api := r.Group("/api/v1")
     {
-        // api.GET("/events", h.ListEvents)
+        api.GET("/events", h.ListEvents)
         api.GET("/events/:id", h.GetEvent)
         api.POST("/events", h.CreateEvent)
         // api.PATCH("/events/:id", h.UpdateEvent)
