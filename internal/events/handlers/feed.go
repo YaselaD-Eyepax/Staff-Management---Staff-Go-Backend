@@ -1,20 +1,46 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func (h *EventHandler) ListEvents(c *gin.Context) {
+
+	// ---- ETag Check (Client Cache Validation) ----
+	clientEtag := c.GetHeader("If-None-Match")
+	// Trim any surrounding quotes or whitespace the client may send
+	clientEtag = strings.TrimSpace(strings.Trim(clientEtag, `"`))
+
+	currentVersion, err := h.Service.GetFeedVersion()
+	if err != nil {
+		log.Printf("ListEvents: GetFeedVersion error: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot read feed version"})
+		return
+	}
+
+	etag := strconv.Itoa(currentVersion)
+	log.Printf("ListEvents: clientIfNoneMatch=%q currentVersion=%d etag=%q\n", clientEtag, currentVersion, etag)
+
+	// If client ETag matches server version → no need to send data
+	if clientEtag != "" && clientEtag == etag {
+		// respond 304 (no body)
+		c.Status(http.StatusNotModified)
+		return
+	}
+
+	// ---- Parse Query Params ----
 	var query EventFeedQuery
 	if err := c.ShouldBindQuery(&query); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid query params"})
 		return
 	}
 
-	// defaults
 	if query.Page <= 0 {
 		query.Page = 1
 	}
@@ -22,7 +48,7 @@ func (h *EventHandler) ListEvents(c *gin.Context) {
 		query.Size = 10
 	}
 
-	// since filter
+	// Since filter
 	var parsedSince *time.Time
 	if query.Since != "" {
 		t, err := time.Parse(time.RFC3339, query.Since)
@@ -33,11 +59,12 @@ func (h *EventHandler) ListEvents(c *gin.Context) {
 
 	events, total, err := h.Service.GetEventFeed(query.Page, query.Size, parsedSince, query.Channel)
 	if err != nil {
+		log.Printf("ListEvents: GetEventFeed error: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "cannot load events"})
 		return
 	}
 
-	// Prepare response list
+	// ---- Build Response ----
 	responseItems := make([]EventFeedItem, 0, len(events))
 
 	for _, e := range events {
@@ -63,6 +90,15 @@ func (h *EventHandler) ListEvents(c *gin.Context) {
 		})
 	}
 
+	// ---- Add ETag header before sending response ----
+	// Use quoted value per RFC: ETag: "7"
+	quoted := `"` + etag + `"`
+	c.Header("ETag", quoted)
+
+	// log what we returned
+	log.Printf("ListEvents: returning %d events, ETag=%s\n", len(responseItems), quoted)
+
+	// ---- Send Response ----
 	c.JSON(http.StatusOK, EventFeedResponse{
 		Page:   query.Page,
 		Size:   query.Size,

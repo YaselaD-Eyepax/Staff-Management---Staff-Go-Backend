@@ -147,3 +147,26 @@ func (r *EventRepository) ModerateEvent(eventID uuid.UUID, status string, modera
         return nil
     })
 }
+
+
+func (r *EventRepository) GetFeedVersion() (int, error) {
+    var meta models.FeedMeta
+
+    // FeedMeta row should always be id=1
+    err := r.DB.First(&meta, "id = 1").Error
+    if err != nil {
+        return 0, err
+    }
+
+    return meta.Version, nil
+}
+
+
+func (r *EventRepository) IncrementFeedVersion() error {
+    return r.DB.Exec(`
+        UPDATE feed_meta 
+        SET version = version + 1, updated_at = NOW()
+        WHERE id = 1
+    `).Error
+}
+

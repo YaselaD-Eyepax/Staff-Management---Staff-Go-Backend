@@ -10,8 +10,8 @@ import (
 )
 
 func (h *EventHandler) UpdateEvent(c *gin.Context) {
-    eventIDStr := c.Param("id")
-    eventID, err := uuid.Parse(eventIDStr)
+    idStr := c.Param("id")
+    eventID, err := uuid.Parse(idStr)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
         return
@@ -23,7 +23,6 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
         return
     }
 
-    // Prepare event updates
     eventUpdates := models.Event{
         ID: eventID,
     }
@@ -39,7 +38,6 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
         eventUpdates.ScheduledAt = &t
     }
 
-    // Body updates
     bodyUpdates := models.AnnouncementBody{
         EventID: eventID,
     }
@@ -47,10 +45,9 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
         bodyUpdates.Body = *dto.Body
     }
     if dto.Attachments != nil {
-        bodyUpdates.Attachments = []byte("[]") // you can convert real attachments later
+        bodyUpdates.Attachments = []byte("[]")
     }
 
-    // Tags
     var tags []models.EventTag
     for _, t := range dto.Tags {
         tags = append(tags, models.EventTag{
@@ -59,11 +56,13 @@ func (h *EventHandler) UpdateEvent(c *gin.Context) {
         })
     }
 
-    // Run update
     if err := h.Service.UpdateEvent(eventUpdates, bodyUpdates, tags); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to update event"})
         return
     }
+
+    // ETag bump
+    _ = h.Service.IncrementFeedVersion()
 
     c.JSON(http.StatusOK, gin.H{"message": "event updated"})
 }

@@ -21,7 +21,6 @@ func (h *EventHandler) ModerateEvent(c *gin.Context) {
         return
     }
 
-    // Validate action
     if dto.Action != "approve" && dto.Action != "reject" {
         c.JSON(http.StatusBadRequest, gin.H{"error": "action must be approve or reject"})
         return
@@ -33,7 +32,6 @@ func (h *EventHandler) ModerateEvent(c *gin.Context) {
         return
     }
 
-    // Convert action → valid DB status
     var status string
     if dto.Action == "approve" {
         status = "approved"
@@ -45,6 +43,9 @@ func (h *EventHandler) ModerateEvent(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "moderation failed"})
         return
     }
+
+    // ETag bump
+    _ = h.Service.IncrementFeedVersion()
 
     c.JSON(http.StatusOK, gin.H{
         "message": "event moderated",

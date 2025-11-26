@@ -4,6 +4,7 @@ import (
 	"events-service/internal/events/models"
 	"events-service/internal/events/repository"
 	"events-service/internal/events/service"
+
 	"net/http"
 	"time"
 
@@ -72,6 +73,9 @@ func (h *EventHandler) CreateEvent(c *gin.Context) {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
+
+    // ETag bump
+    _ = h.Service.IncrementFeedVersion()
 
     c.JSON(http.StatusCreated, gin.H{"id": eventID})
 }

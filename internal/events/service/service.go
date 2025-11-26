@@ -35,3 +35,12 @@ func (s *EventService) UpdateEvent(event models.Event, body models.AnnouncementB
 func (s *EventService) ModerateEvent(eventID uuid.UUID, status string, moderator uuid.UUID, notes string) error {
     return s.Repo.ModerateEvent(eventID, status, moderator, notes)
 }
+
+func (s *EventService) GetFeedVersion() (int, error) {
+    return s.Repo.GetFeedVersion()
+}
+
+func (s *EventService) IncrementFeedVersion() error {
+    return s.Repo.IncrementFeedVersion()
+}
+
