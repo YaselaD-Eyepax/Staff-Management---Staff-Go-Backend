@@ -48,9 +48,16 @@ func (h *EventHandler) ModerateEvent(c *gin.Context) {
     _ = h.Service.IncrementFeedVersion()
 
     if status == "approved" {
-    // enqueue broadcast jobs (one per delivery channel)
-    // payloads can be enriched with more data if needed
-    _ = h.Service.EnqueueBroadcast(eventID, "fcm", nil)
+    // fetch event details to include title/summary
+    evt, _ := h.Service.GetEvent(eventID)
+
+    payload := map[string]any{
+        "title":   evt.Title,
+        "summary": evt.Summary,
+    }
+
+    _ = h.Service.EnqueueBroadcast(eventID, "fcm", payload)
+    
     _ = h.Service.EnqueueBroadcast(eventID, "email", nil)
     _ = h.Service.EnqueueBroadcast(eventID, "teams", nil)
 }

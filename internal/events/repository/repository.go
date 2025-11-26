@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+    "gorm.io/datatypes"
 )
 
 type EventRepository struct {
@@ -172,12 +173,13 @@ func (r *EventRepository) IncrementFeedVersion() error {
 
 // Enqueue a broadcast job for a given event and channel
 func (r *EventRepository) EnqueueBroadcast(eventID uuid.UUID, channel string, payload map[string]any) error {
-	job := models.BroadcastQueue{
-		EventID: eventID,
-		Channel: channel,
-		Payload: payload,
-		Status:  "pending",
-	}
+job := models.BroadcastQueue{
+    EventID: eventID,
+    Channel: channel,
+    Payload: datatypes.JSONMap(payload),
+    Status:  "pending",
+}
+
 	return r.DB.Create(&job).Error
 }
 
