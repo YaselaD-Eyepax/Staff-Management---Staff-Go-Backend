@@ -32,7 +32,7 @@ func main() {
         api.POST("/events/:id/moderate", h.ModerateEvent)
         // api.POST("/events/:id/broadcast", h.BroadcastEvent)
         // api.POST("/events/tag-suggest", h.TagSuggest)
-        // api.GET("/tags", h.ListTags)
+        api.GET("/tags", h.ListTags)
     }
 
     r.GET("/healthz", func(c *gin.Context) {

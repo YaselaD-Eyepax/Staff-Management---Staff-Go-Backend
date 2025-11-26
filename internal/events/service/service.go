@@ -59,3 +59,7 @@ func (s *EventService) UpdateBroadcastJobStatus(jobID int, status string, attemp
 func (s *EventService) CreatePublishAudit(eventID uuid.UUID, channel, status string, details map[string]any) error {
     return s.Repo.CreatePublishAudit(eventID, channel, status, details)
 }
+
+func (s *EventService) SearchGlobalTags(query string) ([]models.GlobalTag, error) {
+    return s.Repo.SearchGlobalTags(query)
+}

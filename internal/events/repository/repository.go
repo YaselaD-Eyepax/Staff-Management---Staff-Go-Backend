@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
-    "gorm.io/datatypes"
 )
 
 type EventRepository struct {
@@ -240,4 +240,19 @@ func (r *EventRepository) CreatePublishAudit(eventID uuid.UUID, channel, status 
 		CreatedAt: time.Now(),
 	}
 	return r.DB.Create(&audit).Error
+}
+
+func (r *EventRepository) SearchGlobalTags(query string) ([]models.GlobalTag, error) {
+    var tags []models.GlobalTag
+    q := r.DB.Model(&models.GlobalTag{})
+
+    if query != "" {
+        q = q.Where("tag ILIKE ?", "%"+query+"%")
+    }
+
+    if err := q.Order("tag ASC").Limit(20).Find(&tags).Error; err != nil {
+        return nil, err
+    }
+
+    return tags, nil
 }
