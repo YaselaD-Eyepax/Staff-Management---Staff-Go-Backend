@@ -10,6 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ListEvents godoc
+// @Summary Get event feed
+// @Description Returns lightweight paginated event feed
+// @Tags Events
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number"
+// @Param size query int false "Page size"
+// @Param since query string false "Get events since timestamp"
+// @Success 200 {object} handlers.EventFeedResponse
+// @Header 200 {string} ETag "Cache version"
+// @Failure 500 {object} map[string]string
+// @Router /events [get]
 func (h *EventHandler) ListEvents(c *gin.Context) {
 
 	// ---- ETag Check (Client Cache Validation) ----

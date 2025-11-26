@@ -1,0 +1,75 @@
+definitions:
+  handlers.EventFeedItem:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      scheduled_at:
+        type: string
+      status:
+        type: string
+      summary:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      title:
+        type: string
+    type: object
+  handlers.EventFeedResponse:
+    properties:
+      events:
+        items:
+          $ref: '#/definitions/handlers.EventFeedItem'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+    type: object
+info:
+  contact: {}
+paths:
+  /events:
+    get:
+      consumes:
+      - application/json
+      description: Returns lightweight paginated event feed
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: size
+        type: integer
+      - description: Get events since timestamp
+        in: query
+        name: since
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              description: Cache version
+              type: string
+          schema:
+            $ref: '#/definitions/handlers.EventFeedResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get event feed
+      tags:
+      - Events
+swagger: "2.0"
