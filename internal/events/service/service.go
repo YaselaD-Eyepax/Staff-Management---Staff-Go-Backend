@@ -63,3 +63,7 @@ func (s *EventService) CreatePublishAudit(eventID uuid.UUID, channel, status str
 func (s *EventService) SearchGlobalTags(query string) ([]models.GlobalTag, error) {
     return s.Repo.SearchGlobalTags(query)
 }
+
+func (s *EventService) SuggestTags(title, summary, body string) []string {
+    return SuggestTags(title, summary, body)
+}

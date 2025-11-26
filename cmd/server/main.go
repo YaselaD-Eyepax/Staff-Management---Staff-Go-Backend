@@ -31,7 +31,7 @@ func main() {
         api.PATCH("/events/:id", h.UpdateEvent)
         api.POST("/events/:id/moderate", h.ModerateEvent)
         // api.POST("/events/:id/broadcast", h.BroadcastEvent)
-        // api.POST("/events/tag-suggest", h.TagSuggest)
+        api.POST("/events/tag-suggest", h.TagSuggest)
         api.GET("/tags", h.ListTags)
     }
 
