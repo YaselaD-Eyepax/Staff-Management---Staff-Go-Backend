@@ -170,3 +170,72 @@ func (r *EventRepository) IncrementFeedVersion() error {
     `).Error
 }
 
+// Enqueue a broadcast job for a given event and channel
+func (r *EventRepository) EnqueueBroadcast(eventID uuid.UUID, channel string, payload map[string]any) error {
+	job := models.BroadcastQueue{
+		EventID: eventID,
+		Channel: channel,
+		Payload: payload,
+		Status:  "pending",
+	}
+	return r.DB.Create(&job).Error
+}
+
+// Fetch pending jobs up to a limit and mark them processing (returns rows)
+func (r *EventRepository) FetchPendingBroadcasts(limit int) ([]models.BroadcastQueue, error) {
+	// var jobs []models.BroadcastQueue
+
+	// Use FOR UPDATE SKIP LOCKED pattern via raw SQL to avoid races if you have multiple workers.
+	tx := r.DB.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	// Select pending jobs and mark as processing
+	rows := []models.BroadcastQueue{}
+	err := tx.Raw(`
+		UPDATE broadcast_queue
+		SET status = 'processing', updated_at = now()
+		WHERE id IN (
+		  SELECT id FROM broadcast_queue
+		  WHERE status = 'pending'
+		  ORDER BY created_at ASC
+		  LIMIT ?
+		  FOR UPDATE SKIP LOCKED
+		)
+		RETURNING *
+	`, limit).Scan(&rows).Error
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
+// Update job status after processing
+func (r *EventRepository) UpdateBroadcastJobStatus(jobID int, status string, attempts int, lastError *string) error {
+	return r.DB.Model(&models.BroadcastQueue{}).
+		Where("id = ?", jobID).
+		Updates(map[string]interface{}{
+			"status":     status,
+			"attempts":   attempts,
+			"last_error": lastError,
+			"updated_at": time.Now(),
+		}).Error
+}
+
+func (r *EventRepository) CreatePublishAudit(eventID uuid.UUID, channel, status string, details map[string]any) error {
+	audit := models.PublishAudit{
+		EventID:   eventID,
+		Channel:   channel,
+		Status:    status,
+		Details:   details,
+		CreatedAt: time.Now(),
+	}
+	return r.DB.Create(&audit).Error
+}

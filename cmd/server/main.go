@@ -4,6 +4,7 @@ import (
 	"events-service/internal/config"
 	"events-service/internal/db"
 	"events-service/internal/events/handlers"
+	"events-service/internal/events/workers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,6 +16,12 @@ func main() {
     r := gin.Default()
 
     h := handlers.NewEventHandler(database)
+
+    // start broadcast worker
+    bw := workers.NewBroadcastWorker(h.Service)
+    bw.Start()
+    // optionally: store bw to gracefully stop on shutdown
+
 
     api := r.Group("/api/v1")
     {

@@ -47,6 +47,15 @@ func (h *EventHandler) ModerateEvent(c *gin.Context) {
     // ETag bump
     _ = h.Service.IncrementFeedVersion()
 
+    if status == "approved" {
+    // enqueue broadcast jobs (one per delivery channel)
+    // payloads can be enriched with more data if needed
+    _ = h.Service.EnqueueBroadcast(eventID, "fcm", nil)
+    _ = h.Service.EnqueueBroadcast(eventID, "email", nil)
+    _ = h.Service.EnqueueBroadcast(eventID, "teams", nil)
+}
+
+
     c.JSON(http.StatusOK, gin.H{
         "message": "event moderated",
         "status":  status,

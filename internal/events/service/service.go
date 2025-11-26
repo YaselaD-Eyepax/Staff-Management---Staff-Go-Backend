@@ -44,3 +44,18 @@ func (s *EventService) IncrementFeedVersion() error {
     return s.Repo.IncrementFeedVersion()
 }
 
+func (s *EventService) EnqueueBroadcast(eventID uuid.UUID, channel string, payload map[string]any) error {
+    return s.Repo.EnqueueBroadcast(eventID, channel, payload)
+}
+
+func (s *EventService) FetchPendingBroadcasts(limit int) ([]models.BroadcastQueue, error) {
+    return s.Repo.FetchPendingBroadcasts(limit)
+}
+
+func (s *EventService) UpdateBroadcastJobStatus(jobID int, status string, attempts int, lastError *string) error {
+    return s.Repo.UpdateBroadcastJobStatus(jobID, status, attempts, lastError)
+}
+
+func (s *EventService) CreatePublishAudit(eventID uuid.UUID, channel, status string, details map[string]any) error {
+    return s.Repo.CreatePublishAudit(eventID, channel, status, details)
+}
