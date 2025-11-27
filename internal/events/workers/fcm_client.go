@@ -11,12 +11,13 @@ import (
 
 var fcmClient *messaging.Client
 
-func InitFCM(credentialPath string) (*messaging.Client, error) {
+func InitFCM(credPath string) (*messaging.Client, error) {
     if fcmClient != nil {
         return fcmClient, nil
     }
 
-    opt := option.WithCredentialsFile(credentialPath)
+    opt := option.WithCredentialsFile(credPath)
+
     app, err := firebase.NewApp(context.Background(), nil, opt)
     if err != nil {
         return nil, err
@@ -27,7 +28,8 @@ func InitFCM(credentialPath string) (*messaging.Client, error) {
         return nil, err
     }
 
-    log.Println("FCM client initialized")
+    log.Println("FCM client initialized ✔")
+
     fcmClient = client
     return client, nil
 }

@@ -134,7 +134,7 @@ func sendFCM(eventID uuid.UUID, payload map[string]any) error {
     }
 
     msg := &messaging.Message{
-        Topic: "events",
+        Topic: "events", // mobile app subscribes to this topic
         Notification: &messaging.Notification{
             Title: payload["title"].(string),
             Body:  payload["summary"].(string),
