@@ -94,3 +94,5 @@ credentials.json
 # -------------------------
 *.swp
 *.swo
+
+fcm.json
