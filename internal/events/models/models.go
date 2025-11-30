@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 )
 
 type Event struct {
@@ -35,12 +36,12 @@ type EventTag struct {
 }
 
 type PublishAudit struct {
-    ID        uint                   `gorm:"primaryKey" json:"id"`
-    EventID   uuid.UUID              `gorm:"type:uuid" json:"event_id"`
-    Channel   string                 `json:"channel"`  // "moderation", "fcm", "email", "teams"
-    Status    string                 `json:"status"`   // approved, rejected, sent, failed
-    Details   map[string]interface{} `gorm:"type:jsonb" json:"details"`
-    CreatedAt time.Time              `json:"created_at"`
+    ID        uint           `gorm:"primaryKey" json:"id"`
+    EventID   uuid.UUID      `gorm:"type:uuid" json:"event_id"`
+    Channel   string         `json:"channel"`  // "moderation", "fcm", "email", "teams"
+    Status    string         `json:"status"`   // approved, rejected, sent, failed
+    Details   datatypes.JSON `gorm:"type:jsonb" json:"details,omitempty"` // Changed this line
+    CreatedAt time.Time      `json:"created_at"`
 }
 
 func (PublishAudit) TableName() string {
