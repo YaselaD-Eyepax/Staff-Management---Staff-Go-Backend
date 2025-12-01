@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"encoding/json"
 	"events-service/internal/events/models"
 	"time"
 
@@ -10,45 +11,57 @@ import (
 )
 
 type EventRepository struct {
-    DB *gorm.DB
+	DB *gorm.DB
 }
 
 func NewEventRepository(db *gorm.DB) *EventRepository {
-    return &EventRepository{DB: db}
+	return &EventRepository{DB: db}
+}
+
+// Helper function to convert map to datatypes.JSON
+func toJSON(data map[string]interface{}) datatypes.JSON {
+	if data == nil {
+		return nil
+	}
+	jsonBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil
+	}
+	return datatypes.JSON(jsonBytes)
 }
 
 func (r *EventRepository) CreateEvent(event *models.Event, body *models.AnnouncementBody, tags []models.EventTag) error {
-    return r.DB.Transaction(func(tx *gorm.DB) error {
-        if err := tx.Create(event).Error; err != nil {
-            return err
-        }
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(event).Error; err != nil {
+			return err
+		}
 
-        if err := tx.Create(body).Error; err != nil {
-            return err
-        }
+		if err := tx.Create(body).Error; err != nil {
+			return err
+		}
 
-        if len(tags) > 0 {
-            if err := tx.Create(&tags).Error; err != nil {
-                return err
-            }
-        }
+		if len(tags) > 0 {
+			if err := tx.Create(&tags).Error; err != nil {
+				return err
+			}
+		}
 
-        return nil
-    })
+		return nil
+	})
 }
 
 func (r *EventRepository) GetEvent(id uuid.UUID) (*models.Event, error) {
-    var event models.Event
-    err := r.DB.
-        Preload("Body").
-        Preload("Tags").
-        First(&event, "id = ?", id).Error
+	var event models.Event
+	err := r.DB.
+		Preload("Body").
+		Preload("Tags").
+		First(&event, "id = ?", id).Error
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return &event, nil
+	return &event, nil
 }
 
 func (r *EventRepository) GetEventFeed(page int, size int, since *time.Time, channel string) ([]models.Event, int64, error) {
@@ -84,87 +97,85 @@ func (r *EventRepository) GetEventFeed(page int, size int, since *time.Time, cha
 }
 
 func (r *EventRepository) UpdateEvent(event *models.Event, body *models.AnnouncementBody, tags []models.EventTag) error {
-    return r.DB.Transaction(func(tx *gorm.DB) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
 
-        // Update event fields
-        if err := tx.Model(&models.Event{}).
-            Where("id = ?", event.ID).
-            Updates(event).Error; err != nil {
-            return err
-        }
+		// Update event fields
+		if err := tx.Model(&models.Event{}).
+			Where("id = ?", event.ID).
+			Updates(event).Error; err != nil {
+			return err
+		}
 
-        // Update body
-        if err := tx.Model(&models.AnnouncementBody{}).
-            Where("event_id = ?", event.ID).
-            Updates(body).Error; err != nil {
-            return err
-        }
+		// Update body
+		if err := tx.Model(&models.AnnouncementBody{}).
+			Where("event_id = ?", event.ID).
+			Updates(body).Error; err != nil {
+			return err
+		}
 
-        // Remove old tags
-        if err := tx.Where("event_id = ?", event.ID).
-            Delete(&models.EventTag{}).Error; err != nil {
-            return err
-        }
+		// Remove old tags
+		if err := tx.Where("event_id = ?", event.ID).
+			Delete(&models.EventTag{}).Error; err != nil {
+			return err
+		}
 
-        // Add new tags
-        if len(tags) > 0 {
-            if err := tx.Create(&tags).Error; err != nil {
-                return err
-            }
-        }
+		// Add new tags
+		if len(tags) > 0 {
+			if err := tx.Create(&tags).Error; err != nil {
+				return err
+			}
+		}
 
-        return nil
-    })
+		return nil
+	})
 }
 
 func (r *EventRepository) ModerateEvent(eventID uuid.UUID, status string, moderatorID uuid.UUID, notes string) error {
-    return r.DB.Transaction(func(tx *gorm.DB) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
 
-        // Update event status
-        if err := tx.Model(&models.Event{}).
-            Where("id = ?", eventID).
-            Updates(map[string]interface{}{
-                "status": status,
-            }).Error; err != nil {
-            return err
-        }
+		// Update event status
+		if err := tx.Model(&models.Event{}).
+			Where("id = ?", eventID).
+			Updates(map[string]interface{}{
+				"status": status,
+			}).Error; err != nil {
+			return err
+		}
 
-        // Insert audit entry
-        audit := models.PublishAudit{
-            EventID: eventID,
-            Channel: "moderation",
-            Status:  status,
-            Details: map[string]interface{}{
-                "moderator_id": moderatorID.String(),
-                "notes":        notes,
-            },
-            CreatedAt: time.Now(),
-        }
+		// Insert audit entry - FIXED: convert map to datatypes.JSON
+		audit := models.PublishAudit{
+			EventID: eventID,
+			Channel: "moderation",
+			Status:  status,
+			Details: toJSON(map[string]interface{}{
+				"moderator_id": moderatorID.String(),
+				"notes":        notes,
+			}),
+			CreatedAt: time.Now(),
+		}
 
-        if err := tx.Create(&audit).Error; err != nil {
-            return err
-        }
+		if err := tx.Create(&audit).Error; err != nil {
+			return err
+		}
 
-        return nil
-    })
+		return nil
+	})
 }
-
 
 func (r *EventRepository) GetFeedVersion() (int, error) {
-    var meta models.FeedMeta
+	var meta models.FeedMeta
 
-    // FeedMeta row should always be id=1
-    err := r.DB.First(&meta, "id = 1").Error
-    if err != nil {
-        return 0, err
-    }
+	// FeedMeta row should always be id=1
+	err := r.DB.First(&meta, "id = 1").Error
+	if err != nil {
+		return 0, err
+	}
 
-    return meta.Version, nil
+	return meta.Version, nil
 }
 
-
 func (r *EventRepository) IncrementFeedVersion() error {
-    return r.DB.Exec(`
+	return r.DB.Exec(`
         UPDATE feed_meta 
         SET version = version + 1, updated_at = NOW()
         WHERE id = 1
@@ -173,12 +184,12 @@ func (r *EventRepository) IncrementFeedVersion() error {
 
 // Enqueue a broadcast job for a given event and channel
 func (r *EventRepository) EnqueueBroadcast(eventID uuid.UUID, channel string, payload map[string]any) error {
-job := models.BroadcastQueue{
-    EventID: eventID,
-    Channel: channel,
-    Payload: datatypes.JSONMap(payload),
-    Status:  "pending",
-}
+	job := models.BroadcastQueue{
+		EventID: eventID,
+		Channel: channel,
+		Payload: datatypes.JSONMap(payload),
+		Status:  "pending",
+	}
 
 	return r.DB.Create(&job).Error
 }
@@ -232,27 +243,34 @@ func (r *EventRepository) UpdateBroadcastJobStatus(jobID int, status string, att
 }
 
 func (r *EventRepository) CreatePublishAudit(eventID uuid.UUID, channel, status string, details map[string]any) error {
+	// FIXED: convert map to datatypes.JSON
 	audit := models.PublishAudit{
 		EventID:   eventID,
 		Channel:   channel,
 		Status:    status,
-		Details:   details,
+		Details:   toJSON(details),
 		CreatedAt: time.Now(),
 	}
 	return r.DB.Create(&audit).Error
 }
 
 func (r *EventRepository) SearchGlobalTags(query string) ([]models.GlobalTag, error) {
-    var tags []models.GlobalTag
-    q := r.DB.Model(&models.GlobalTag{})
+	var tags []models.GlobalTag
+	q := r.DB.Model(&models.GlobalTag{})
 
-    if query != "" {
-        q = q.Where("tag ILIKE ?", "%"+query+"%")
-    }
+	if query != "" {
+		q = q.Where("tag ILIKE ?", "%"+query+"%")
+	}
 
-    if err := q.Order("tag ASC").Limit(20).Find(&tags).Error; err != nil {
-        return nil, err
-    }
+	if err := q.Order("tag ASC").Limit(20).Find(&tags).Error; err != nil {
+		return nil, err
+	}
 
-    return tags, nil
+	return tags, nil
+}
+
+func (r *EventRepository) FetchActiveStaffEmails() ([]string, error) {
+    var emails []string
+    err := r.DB.Raw(`SELECT email FROM app_users`).Scan(&emails).Error
+    return emails, err
 }
