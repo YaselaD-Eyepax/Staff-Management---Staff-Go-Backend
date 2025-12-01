@@ -67,3 +67,9 @@ func (s *EventService) SearchGlobalTags(query string) ([]models.GlobalTag, error
 func (s *EventService) SuggestTags(title, summary, body string) []string {
     return SuggestTags(title, summary, body)
 }
+
+func (s *EventService) GetAllStaffEmails() ([]string, error) {
+    // TODO: connect to staff service / auth DB
+    // Example:
+    return s.Repo.FetchActiveStaffEmails()
+}

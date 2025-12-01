@@ -268,3 +268,9 @@ func (r *EventRepository) SearchGlobalTags(query string) ([]models.GlobalTag, er
 
 	return tags, nil
 }
+
+func (r *EventRepository) FetchActiveStaffEmails() ([]string, error) {
+    var emails []string
+    err := r.DB.Raw(`SELECT email FROM app_users`).Scan(&emails).Error
+    return emails, err
+}
