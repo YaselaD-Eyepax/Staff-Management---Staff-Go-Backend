@@ -1,4 +1,4 @@
-CREATE TABLE announcement_bodies (
+CREATE TABLE IF announcement_bodies (
     id UUID PRIMARY KEY,
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     body TEXT NOT NULL,

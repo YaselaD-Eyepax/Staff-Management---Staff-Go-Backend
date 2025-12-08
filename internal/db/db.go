@@ -1,9 +1,10 @@
 package db
 
 import (
-    "events-service/internal/config"
-    "gorm.io/driver/postgres"
-    "gorm.io/gorm"
+	"events-service/internal/config"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func InitDB(cfg *config.Config) *gorm.DB {
